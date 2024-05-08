@@ -83,6 +83,8 @@ init :: proc(state: ^core.EditorState) {
     open_default_buffers(state)
     build_layouts(state)
 
+    font.load("CodeNewRomanNerdFontMono-Regular.otf")
+
     glo.CMD_EDITOR = command.register_command_set(state)
     glo.CMD_FILE_BROWSER = command.register_command_set(state)
 
