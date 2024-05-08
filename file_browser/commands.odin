@@ -7,10 +7,7 @@ import "core:strings"
 import "bred:core"
 import "bred:core/buffer"
 import "bred:core/command"
-import "bred:core/layout"
 import "bred:util/pool"
-
-import glo "user:globals"
 
 @(private = "file")
 EditorState :: core.EditorState
@@ -18,7 +15,13 @@ EditorState :: core.EditorState
 WildcardValue :: core.WildcardValue
 
 @(private = "file")
-get_active_browser :: proc(state: ^EditorState, loc := #caller_location) -> (^FileBrowserData, bool) {
+get_active_browser :: proc(
+    state: ^EditorState,
+    loc := #caller_location,
+) -> (
+    ^FileBrowserData,
+    bool,
+) {
     portal := &state.portals[state.active_portal]
 
     return auto_cast portal.config, portal.config != nil

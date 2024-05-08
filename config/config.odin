@@ -4,13 +4,13 @@ import "core:log"
 import "core:strings"
 
 import "bred:builtin/commands"
-import "bred:builtin/components/status_bar"
 import "bred:builtin/components/file_editor"
+import "bred:builtin/components/status_bar"
 import "bred:core"
 import "bred:core/buffer"
 import "bred:core/command"
+import "bred:core/font"
 import "bred:core/layout"
-import "bred:core/portal"
 
 import "user:file_browser"
 import glo "user:globals"
@@ -22,11 +22,11 @@ create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
 }
 
 open_default_buffers :: proc(state: ^core.EditorState) {
-    for file_path, index in ([]string {
+    for file_path in ([]string {
             strings.clone("F:\\GitHub\\editor\\.build\\test.txt"),
             strings.clone("F:\\GitHub\\editor\\.build\\test2.txt"),
         }) {
-        id, ref := buffer.create(state)
+        _, ref := buffer.create(state)
         load_ok := buffer.load_file(ref, file_path)
         assert(load_ok, "Failed to load test file")
     }
@@ -147,6 +147,6 @@ init :: proc(state: ^core.EditorState) {
 
     factory.modifiers = {.Shift}
     factory->register({.Char}, file_browser.insert_character)
-    
+
     layout.activate_layout(state, 0)
 }

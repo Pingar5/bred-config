@@ -106,7 +106,7 @@ update_search_path :: proc(data: ^FileBrowserData) {
 
                 new_search_path = strings.clone(data.search_path[:last_folder_start])
             } else {
-                replaced, was_alloc := strings.replace_all(
+                replaced, _ := strings.replace_all(
                     data.query,
                     "/",
                     "\\",
