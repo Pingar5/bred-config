@@ -176,6 +176,6 @@ init :: proc(state: ^core.EditorState) {
         command.register(state, glo.CMD_TREE_VIEWER, {}, {.DOWN}, viewer.move_cursor_down)
     }
 
-    layout.activate_layout(state, glo.LAYOUT_TREE_VIEWER)
+    layout.activate_layout(state, glo.LAYOUT_SINGLE)
     state.portals[0].buffer = buffer_id
 }
