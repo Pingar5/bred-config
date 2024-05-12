@@ -12,10 +12,10 @@ import "bred:core/font"
 import "bred:core/layout"
 import "bred:lib/treesitter/viewer"
 
+import "user:components/file_browser"
 import "user:components/status_bar"
-import "user:file_browser"
-import "user:parsers"
 import glo "user:globals"
+import "user:parsers"
 
 create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
     p = file_editor.create_file_portal(rect)
@@ -89,7 +89,7 @@ open_file_browser :: proc(state: ^core.EditorState, _: []core.WildcardValue) -> 
 init :: proc(state: ^core.EditorState) {
     register_theme()
     parsers.register_parsers()
-    
+
     buffer_id: core.BufferId
     {     // Open testing buffer
         ref: ^core.Buffer
