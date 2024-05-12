@@ -60,7 +60,7 @@ load_options :: proc(data: ^FileBrowserData) {
         delete(option)
     }
     clear(&data.options)
-
+    
     folder, open_err := os.open(data.search_path)
     if open_err != 0 {
         log.errorf("Failed to open folder: %d\n", open_err)
@@ -215,7 +215,7 @@ create_file_browser :: proc(state: ^core.EditorState) -> (portal: core.Portal) {
         last_slash := strings.last_index(old_buffer.file_path, "\\")
         config.search_path = strings.clone(old_buffer.file_path[:last_slash + 1])
     } else {
-        config.search_path = strings.clone("F:\\GitHub\\editor\\")
+        config.search_path = os.get_current_directory(context.allocator)
     }
 
     load_options(config)
