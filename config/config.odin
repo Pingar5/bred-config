@@ -11,8 +11,10 @@ import "bred:core/buffer"
 import "bred:core/command"
 import "bred:core/font"
 import "bred:core/layout"
+import "bred:lib/treesitter/viewer"
 
 import "user:file_browser"
+import "user:parsers"
 import glo "user:globals"
 
 create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
@@ -21,9 +23,16 @@ create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
     return
 }
 
+create_tree_viewer :: proc(rect: core.Rect) -> (p: core.Portal) {
+    p = viewer.create_tree_viewer(rect, 0)
+    p.command_set_id = glo.CMD_TREE_VIEWER
+    return
+}
+
 build_layouts :: proc(state: ^core.EditorState) {
     FILE := core.PortalDefinition(create_file_portal)
     STATUS_BAR := core.PortalDefinition(status_bar.create_status_bar)
+    TREE_VIEWER := core.PortalDefinition(create_tree_viewer)
 
     single_file := layout.create_absolute_split(.Bottom, 1, FILE, STATUS_BAR)
 
@@ -36,6 +45,15 @@ build_layouts :: proc(state: ^core.EditorState) {
 
     glo.LAYOUT_SINGLE = layout.register_layout(state, single_file)
     glo.LAYOUT_DOUBLE = layout.register_layout(state, double_file)
+    glo.LAYOUT_TREE_VIEWER = layout.register_layout(
+        state,
+        layout.create_absolute_split(
+            .Bottom,
+            1,
+            layout.create_percent_split(.Right, 50, FILE, TREE_VIEWER),
+            STATUS_BAR,
+        ),
+    )
 }
 
 switch_layouts :: proc(state: ^core.EditorState, wildcards: []core.WildcardValue) -> bool {
@@ -69,11 +87,15 @@ open_file_browser :: proc(state: ^core.EditorState, _: []core.WildcardValue) -> 
 }
 
 init :: proc(state: ^core.EditorState) {
+    register_theme()
+    parsers.register_parsers()
+    
     buffer_id: core.BufferId
     {     // Open testing buffer
         ref: ^core.Buffer
         buffer_id, ref = buffer.create(state)
-        buffer.load_file(ref, strings.clone("F:\\GitHub\\bred\\.build\\test.odin"))
+        ok := buffer.load_file(ref, strings.clone("F:\\GitHub\\bred\\.build\\test.odin"))
+        assert(ok, "Failed to load test file")
     }
 
     build_layouts(state)
@@ -149,5 +171,11 @@ init :: proc(state: ^core.EditorState) {
         factory->register({.Char}, file_browser.insert_character)
     }
 
-    layout.activate_layout(state, 0)
+    {     // Tree Viewer Commands
+        command.register(state, glo.CMD_TREE_VIEWER, {}, {.UP}, viewer.move_cursor_up)
+        command.register(state, glo.CMD_TREE_VIEWER, {}, {.DOWN}, viewer.move_cursor_down)
+    }
+
+    layout.activate_layout(state, glo.LAYOUT_TREE_VIEWER)
+    state.portals[0].buffer = buffer_id
 }
