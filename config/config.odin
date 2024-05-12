@@ -21,17 +21,6 @@ create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
     return
 }
 
-open_default_buffers :: proc(state: ^core.EditorState) {
-    for file_path in ([]string {
-            strings.clone("F:\\GitHub\\bred\\.build\\test.txt"),
-            strings.clone("F:\\GitHub\\bred\\.build\\test2.txt"),
-        }) {
-        _, ref := buffer.create(state)
-        load_ok := buffer.load_file(ref, file_path)
-        assert(load_ok, "Failed to load test file")
-    }
-}
-
 build_layouts :: proc(state: ^core.EditorState) {
     FILE := core.PortalDefinition(create_file_portal)
     STATUS_BAR := core.PortalDefinition(status_bar.create_status_bar)
@@ -80,7 +69,13 @@ open_file_browser :: proc(state: ^core.EditorState, _: []core.WildcardValue) -> 
 }
 
 init :: proc(state: ^core.EditorState) {
-    open_default_buffers(state)
+    buffer_id: core.BufferId
+    {     // Open testing buffer
+        ref: ^core.Buffer
+        buffer_id, ref = buffer.create(state)
+        buffer.load_file(ref, strings.clone("F:\\GitHub\\bred\\.build\\test.odin"))
+    }
+
     build_layouts(state)
 
     font.load("CodeNewRomanNerdFontMono-Regular.otf", 24)
@@ -94,61 +89,65 @@ init :: proc(state: ^core.EditorState) {
     command.register(state, command.GLOBAL_SET, {.Ctrl}, {.O}, open_file_browser)
     command.register(state, command.GLOBAL_SET, {.Alt}, {.L, .Num}, switch_layouts)
 
-    factory := command.factory_create(state, glo.CMD_EDITOR)
-    factory->register({.Char}, commands.insert_character)
-    factory->register({.LEFT}, file_editor.move_cursor_left)
-    factory->register({.RIGHT}, file_editor.move_cursor_right)
-    factory->register({.UP}, file_editor.move_cursor_up)
-    factory->register({.DOWN}, file_editor.move_cursor_down)
+    {     // File Editor Commands
+        factory := command.factory_create(state, glo.CMD_EDITOR)
+        factory->register({.Char}, commands.insert_character)
+        factory->register({.LEFT}, file_editor.move_cursor_left)
+        factory->register({.RIGHT}, file_editor.move_cursor_right)
+        factory->register({.UP}, file_editor.move_cursor_up)
+        factory->register({.DOWN}, file_editor.move_cursor_down)
 
-    factory->register({.ENTER}, commands.insert_line)
-    factory->register({.BACKSPACE}, commands.delete_behind)
-    factory->register({.DELETE}, commands.delete_ahead)
-    factory->register({.END}, commands.jump_to_line_end)
-    factory->register({.HOME}, commands.jump_to_line_start)
-    factory->register({.PAGE_UP}, file_editor.page_up)
-    factory->register({.PAGE_DOWN}, file_editor.page_down)
+        factory->register({.ENTER}, commands.insert_line)
+        factory->register({.BACKSPACE}, commands.delete_behind)
+        factory->register({.DELETE}, commands.delete_ahead)
+        factory->register({.END}, commands.jump_to_line_end)
+        factory->register({.HOME}, commands.jump_to_line_start)
+        factory->register({.PAGE_UP}, file_editor.page_up)
+        factory->register({.PAGE_DOWN}, file_editor.page_down)
 
-    factory.modifiers = {.Shift}
-    factory->register({.Char}, commands.insert_character)
-    factory->register({.ENTER}, commands.insert_line_above)
+        factory.modifiers = {.Shift}
+        factory->register({.Char}, commands.insert_character)
+        factory->register({.ENTER}, commands.insert_line_above)
 
-    factory.modifiers = {.Ctrl}
-    factory->register({.F, .Char}, commands.jump_to_character)
-    factory->register({.H}, file_editor.move_cursor_left)
-    factory->register({.L}, file_editor.move_cursor_right)
-    factory->register({.K}, file_editor.move_cursor_up)
-    factory->register({.J}, file_editor.move_cursor_down)
-    factory->register({.Num, .H}, file_editor.move_cursor_left)
-    factory->register({.Num, .L}, file_editor.move_cursor_right)
-    factory->register({.Num, .K}, file_editor.move_cursor_up)
-    factory->register({.Num, .J}, file_editor.move_cursor_down)
-    factory->register({.ENTER}, commands.insert_line_below)
-    factory->register({.D, .D}, commands.delete_lines_below)
-    factory->register({.D, .Num, .D}, commands.delete_lines_below)
-    factory->register({.S}, commands.save)
-    factory->register({.V}, commands.paste_from_system_clipboard)
-    factory->register({.C}, commands.copy_line_to_system_clipboard)
-    factory->register({.Z}, commands.undo)
-    factory->register({.W}, commands.close)
+        factory.modifiers = {.Ctrl}
+        factory->register({.F, .Char}, commands.jump_to_character)
+        factory->register({.H}, file_editor.move_cursor_left)
+        factory->register({.L}, file_editor.move_cursor_right)
+        factory->register({.K}, file_editor.move_cursor_up)
+        factory->register({.J}, file_editor.move_cursor_down)
+        factory->register({.Num, .H}, file_editor.move_cursor_left)
+        factory->register({.Num, .L}, file_editor.move_cursor_right)
+        factory->register({.Num, .K}, file_editor.move_cursor_up)
+        factory->register({.Num, .J}, file_editor.move_cursor_down)
+        factory->register({.ENTER}, commands.insert_line_below)
+        factory->register({.D, .D}, commands.delete_lines_below)
+        factory->register({.D, .Num, .D}, commands.delete_lines_below)
+        factory->register({.S}, commands.save)
+        factory->register({.V}, commands.paste_from_system_clipboard)
+        factory->register({.C}, commands.copy_line_to_system_clipboard)
+        factory->register({.Z}, commands.undo)
+        factory->register({.W}, commands.close)
 
-    factory.modifiers = {.Ctrl, .Shift}
-    factory->register({.ENTER}, commands.insert_line_above)
-    factory->register({.D, .Num, .D}, commands.delete_lines_above)
-    factory->register({.Z}, commands.redo)
+        factory.modifiers = {.Ctrl, .Shift}
+        factory->register({.ENTER}, commands.insert_line_above)
+        factory->register({.D, .Num, .D}, commands.delete_lines_above)
+        factory->register({.Z}, commands.redo)
+    }
 
-    factory = command.factory_create(state, glo.CMD_FILE_BROWSER)
-    factory->register({.Char}, file_browser.insert_character)
-    factory->register({.LEFT}, file_browser.move_cursor_left)
-    factory->register({.RIGHT}, file_browser.move_cursor_right)
-    factory->register({.UP}, file_browser.move_cursor_up)
-    factory->register({.DOWN}, file_browser.move_cursor_down)
-    factory->register({.BACKSPACE}, file_browser.delete_behind)
-    factory->register({.DELETE}, file_browser.delete_ahead)
-    factory->register({.ENTER}, file_browser.submit)
+    {     // File Browser Commands
+        factory := command.factory_create(state, glo.CMD_FILE_BROWSER)
+        factory->register({.Char}, file_browser.insert_character)
+        factory->register({.LEFT}, file_browser.move_cursor_left)
+        factory->register({.RIGHT}, file_browser.move_cursor_right)
+        factory->register({.UP}, file_browser.move_cursor_up)
+        factory->register({.DOWN}, file_browser.move_cursor_down)
+        factory->register({.BACKSPACE}, file_browser.delete_behind)
+        factory->register({.DELETE}, file_browser.delete_ahead)
+        factory->register({.ENTER}, file_browser.submit)
 
-    factory.modifiers = {.Shift}
-    factory->register({.Char}, file_browser.insert_character)
+        factory.modifiers = {.Shift}
+        factory->register({.Char}, file_browser.insert_character)
+    }
 
     layout.activate_layout(state, 0)
 }
