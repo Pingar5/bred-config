@@ -1,4 +1,4 @@
-package constants
+package globals
 
 // COMMAND SETS
 CMD_EDITOR: int

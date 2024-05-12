@@ -5,7 +5,6 @@ import "core:strings"
 
 import "bred:builtin/commands"
 import "bred:builtin/components/file_editor"
-import "bred:builtin/components/status_bar"
 import "bred:core"
 import "bred:core/buffer"
 import "bred:core/command"
@@ -13,6 +12,7 @@ import "bred:core/font"
 import "bred:core/layout"
 import "bred:lib/treesitter/viewer"
 
+import "user:components/status_bar"
 import "user:file_browser"
 import "user:parsers"
 import glo "user:globals"
@@ -34,11 +34,11 @@ build_layouts :: proc(state: ^core.EditorState) {
     STATUS_BAR := core.PortalDefinition(status_bar.create_status_bar)
     TREE_VIEWER := core.PortalDefinition(create_tree_viewer)
 
-    single_file := layout.create_absolute_split(.Bottom, 1, FILE, STATUS_BAR)
+    single_file := layout.create_absolute_split(.Left, status_bar.WIDTH, FILE, STATUS_BAR)
 
     double_file := layout.create_absolute_split(
-        .Bottom,
-        1,
+        .Left,
+        status_bar.WIDTH,
         layout.create_percent_split(.Right, 50, FILE, FILE),
         STATUS_BAR,
     )
@@ -48,8 +48,8 @@ build_layouts :: proc(state: ^core.EditorState) {
     glo.LAYOUT_TREE_VIEWER = layout.register_layout(
         state,
         layout.create_absolute_split(
-            .Bottom,
-            1,
+            .Left,
+            status_bar.WIDTH,
             layout.create_percent_split(.Right, 50, FILE, TREE_VIEWER),
             STATUS_BAR,
         ),
