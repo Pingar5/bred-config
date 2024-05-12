@@ -7,10 +7,10 @@ import "bred:builtin/commands"
 import "bred:builtin/components/file_editor"
 import "bred:core"
 import "bred:core/buffer"
-import "bred:core/portal"
 import "bred:core/command"
 import "bred:core/font"
 import "bred:core/layout"
+import "bred:core/portal"
 import "bred:lib/treesitter/viewer"
 
 import "user:components/file_browser"
@@ -106,14 +106,20 @@ init :: proc(state: ^core.EditorState) {
     glo.CMD_EDITOR = command.register_command_set(state)
     glo.CMD_FILE_BROWSER = command.register_command_set(state)
 
-    command.register(state, command.GLOBAL_SET, {}, {.ESCAPE}, commands.clear_modifiers)
-    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.LEFT}, commands.previous_portal)
-    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.RIGHT}, commands.next_portal)
-    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.O}, open_file_browser)
-    command.register(state, command.GLOBAL_SET, {.Alt}, {.L, .Num}, switch_layouts)
+    {
+        factory := command.factory_create(state, command.GLOBAL_SET)
+        factory->register({.ESCAPE}, commands.clear_modifiers)
+        factory->register({.L, .Num}, switch_layouts, {.Alt})
+        
+        factory.modifiers = {.Ctrl}
+        factory->register({.LEFT}, commands.previous_portal)
+        factory->register({.RIGHT}, commands.next_portal)
+        factory->register({.O}, open_file_browser)
+        factory->register({.PERIOD}, commands.repeat_command, keep_as_last_motion = false)
     
-    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.SPACE, .Char}, open_harpoon_mark)
-    command.register(state, command.GLOBAL_SET, {.Ctrl, .Shift}, {.SPACE, .Char}, set_harpoon_mark)
+        factory->register({.SPACE, .Char}, open_harpoon_mark)
+        factory->register({.SPACE, .Char}, set_harpoon_mark, {.Shift})
+    }
 
     {     // File Editor Commands
         factory := command.factory_create(state, glo.CMD_EDITOR)
@@ -136,7 +142,10 @@ init :: proc(state: ^core.EditorState) {
         factory->register({.ENTER}, commands.insert_line_above)
 
         factory.modifiers = {.Ctrl}
-        factory->register({.F, .Char}, commands.jump_to_character)
+        factory->register({.F, .Char}, file_editor.jump_to_character)
+        factory->register({.F, .Char}, file_editor.jump_to_character, {.Shift})
+        factory->register({.T, .Char}, file_editor.jump_back_to_character)
+        factory->register({.T, .Char}, file_editor.jump_back_to_character, {.Shift})
         factory->register({.H}, file_editor.move_cursor_left)
         factory->register({.L}, file_editor.move_cursor_right)
         factory->register({.K}, file_editor.move_cursor_up)
@@ -190,17 +199,17 @@ set_harpoon_mark :: proc(state: ^core.EditorState, wildcards: []core.WildcardVal
 
     MARK_BINDS :: "hjkl;"
     mark_index := strings.index_byte(MARK_BINDS, wildcards[0].(byte))
-    
+
     if mark_index == -1 do return false
-    
+
     mark := &glo.HARPOON_MARKS[mark_index]
 
     active_buffer, buffer_exists := buffer.get_buffer(state, active_portal.buffer)
     if buffer_exists {
         mark.buffer_id = active_portal.buffer
-        
+
         first_character_index := strings.last_index(active_buffer.file_path, "\\") + 1
-        mark.label = active_buffer.file_path[first_character_index:first_character_index+1]
+        mark.label = active_buffer.file_path[first_character_index:first_character_index + 1]
     } else {
         mark.buffer_id = 0
         mark.label = ""
@@ -215,9 +224,9 @@ open_harpoon_mark :: proc(state: ^core.EditorState, wildcards: []core.WildcardVa
 
     MARK_BINDS :: "hjkl;"
     mark_index := strings.index_byte(MARK_BINDS, wildcards[0].(byte))
-    
+
     if mark_index == -1 do return false
-    
+
     mark := &glo.HARPOON_MARKS[mark_index]
 
     if mark.buffer_id != 0 {
@@ -226,7 +235,7 @@ open_harpoon_mark :: proc(state: ^core.EditorState, wildcards: []core.WildcardVa
     } else {
         open_file_browser(state, nil)
     }
-    
+
 
     return true
 }
