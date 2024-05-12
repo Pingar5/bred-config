@@ -7,6 +7,7 @@ import "bred:builtin/commands"
 import "bred:builtin/components/file_editor"
 import "bred:core"
 import "bred:core/buffer"
+import "bred:core/portal"
 import "bred:core/command"
 import "bred:core/font"
 import "bred:core/layout"
@@ -110,6 +111,9 @@ init :: proc(state: ^core.EditorState) {
     command.register(state, command.GLOBAL_SET, {.Ctrl}, {.RIGHT}, commands.next_portal)
     command.register(state, command.GLOBAL_SET, {.Ctrl}, {.O}, open_file_browser)
     command.register(state, command.GLOBAL_SET, {.Alt}, {.L, .Num}, switch_layouts)
+    
+    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.M, .Char}, open_harpoon_mark)
+    command.register(state, command.GLOBAL_SET, {.Ctrl, .Shift}, {.M, .Char}, set_harpoon_mark)
 
     {     // File Editor Commands
         factory := command.factory_create(state, glo.CMD_EDITOR)
@@ -178,4 +182,51 @@ init :: proc(state: ^core.EditorState) {
 
     layout.activate_layout(state, glo.LAYOUT_SINGLE)
     state.portals[0].buffer = buffer_id
+}
+
+set_harpoon_mark :: proc(state: ^core.EditorState, wildcards: []core.WildcardValue) -> bool {
+    command.validate_wildcards(wildcards, {.Char}, "set_harpoon_mark") or_return
+    active_portal := portal.get_active_portal(state)
+
+    MARK_BINDS :: "hjkl;"
+    mark_index := strings.index_byte(MARK_BINDS, wildcards[0].(byte))
+    
+    if mark_index == -1 do return false
+    
+    mark := &glo.HARPOON_MARKS[mark_index]
+
+    active_buffer, buffer_exists := buffer.get_buffer(state, active_portal.buffer)
+    if buffer_exists {
+        mark.buffer_id = active_portal.buffer
+        
+        first_character_index := strings.last_index(active_buffer.file_path, "\\") + 1
+        mark.label = active_buffer.file_path[first_character_index:first_character_index+1]
+    } else {
+        mark.buffer_id = 0
+        mark.label = ""
+    }
+
+    return true
+}
+
+open_harpoon_mark :: proc(state: ^core.EditorState, wildcards: []core.WildcardValue) -> bool {
+    command.validate_wildcards(wildcards, {.Char}, "set_harpoon_mark") or_return
+    active_portal := portal.get_active_portal(state)
+
+    MARK_BINDS :: "hjkl;"
+    mark_index := strings.index_byte(MARK_BINDS, wildcards[0].(byte))
+    
+    if mark_index == -1 do return false
+    
+    mark := &glo.HARPOON_MARKS[mark_index]
+
+    if mark.buffer_id != 0 {
+        active_portal.buffer = mark.buffer_id
+        file_editor.center_cursor(state, active_portal)
+    } else {
+        open_file_browser(state, nil)
+    }
+    
+
+    return true
 }
