@@ -112,8 +112,8 @@ init :: proc(state: ^core.EditorState) {
     command.register(state, command.GLOBAL_SET, {.Ctrl}, {.O}, open_file_browser)
     command.register(state, command.GLOBAL_SET, {.Alt}, {.L, .Num}, switch_layouts)
     
-    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.M, .Char}, open_harpoon_mark)
-    command.register(state, command.GLOBAL_SET, {.Ctrl, .Shift}, {.M, .Char}, set_harpoon_mark)
+    command.register(state, command.GLOBAL_SET, {.Ctrl}, {.SPACE, .Char}, open_harpoon_mark)
+    command.register(state, command.GLOBAL_SET, {.Ctrl, .Shift}, {.SPACE, .Char}, set_harpoon_mark)
 
     {     // File Editor Commands
         factory := command.factory_create(state, glo.CMD_EDITOR)
