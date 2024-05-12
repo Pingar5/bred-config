@@ -23,8 +23,8 @@ create_file_portal :: proc(rect: core.Rect) -> (p: core.Portal) {
 
 open_default_buffers :: proc(state: ^core.EditorState) {
     for file_path in ([]string {
-            strings.clone("F:\\GitHub\\editor\\.build\\test.txt"),
-            strings.clone("F:\\GitHub\\editor\\.build\\test2.txt"),
+            strings.clone("F:\\GitHub\\bred\\.build\\test.txt"),
+            strings.clone("F:\\GitHub\\bred\\.build\\test2.txt"),
         }) {
         _, ref := buffer.create(state)
         load_ok := buffer.load_file(ref, file_path)
