@@ -130,7 +130,7 @@ update_search_path :: proc(data: ^FileBrowserData) {
 }
 
 render_file_browser :: proc(self: ^core.Portal, state: ^core.EditorState) {
-    data := transmute(^FileBrowserData)self.config
+    data := cast(^FileBrowserData)self.config
     usable_rect := render_popup(self, state)
 
     update_search_path(data)
@@ -224,7 +224,7 @@ create_file_browser :: proc(state: ^core.EditorState) -> (portal: core.Portal) {
 }
 
 destroy_file_browser :: proc(portal: ^core.Portal) {
-    data := transmute(^FileBrowserData)portal.config
+    data := cast(^FileBrowserData)portal.config
 
     for option in data.options {
         delete(option)
